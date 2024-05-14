@@ -1,5 +1,9 @@
+import random
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QHeaderView, QMessageBox
+
+from PyQt5.QtCore import QTimer
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QHeaderView, QMessageBox, QSpinBox, \
+    QSizePolicy, QLabel
 from PyQt5.uic import loadUi
 
 from logic_plan import first_plan
@@ -14,8 +18,6 @@ class MainWindow(QMainWindow):
         self.tableWidget.setRowCount(self.spinBox_rows.value())
         self.tableWidget.setColumnCount(self.spinBox_columns.value())
 
-        self.fill_table_with_indices()
-
         # Подключаем сигналы от spinBox'ов к слотам для обновления таблицы
         self.spinBox_rows.valueChanged.connect(self.update_table_rows)
         self.spinBox_columns.valueChanged.connect(self.update_table_columns)
@@ -26,35 +28,71 @@ class MainWindow(QMainWindow):
 
         self.pushButton.clicked.connect(self.copy_table_values)
 
-        # Устанавливаем режим растягивания столбцов
-        self.tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.tableWidget_2.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        QTimer.singleShot(100, self.fill_table_with_indices)
 
     def fill_table_with_indices(self):
+        self.tableWidget_2.setColumnCount(0)
+        self.tableWidget_2.setRowCount(0)
+
+        self.tableWidget.setColumnCount(self.spinBox_columns.value() + 1)
+        self.tableWidget.setRowCount(self.spinBox_rows.value() + 1)
+
+        self.tableWidget_2.setColumnCount(self.spinBox_columns.value() + 1)
+        self.tableWidget_2.setRowCount(self.spinBox_rows.value() + 1)
+
         rows = self.tableWidget.rowCount()
         columns = self.tableWidget.columnCount()
+
+        storages_headers = []
+        for supplier in range(1, self.spinBox_columns.value() + 1):
+            storages_headers.append(f'Магазин {str(supplier)}')
+
+        shop_headers = []
+        for supplier in range(1, self.spinBox_rows.value() + 1):
+            shop_headers.append(f'Поставщик {str(supplier)}')
+
         for row in range(rows):
             for column in range(columns):
-                if row == 0 and column == 0:
-                    pass
-                elif row == 0:
-                    index = f"Потребитель {column}"
-                    self.tableWidget.setItem(row, column, QTableWidgetItem(index))
-                elif column == 0:
-                    index = f"Поставщик {row}"
-                    self.tableWidget.setItem(row, column, QTableWidgetItem(index))
-                elif column != columns - 1 and row != rows - 1:
-                    index = f"Тариф i{row + 1}j{column + 1}"
-                    self.tableWidget.setItem(row, column, QTableWidgetItem(index))
-                else:
-                    index = "Потребность"
-                    self.tableWidget.setItem(row, column, QTableWidgetItem(index))
-        supplier_volume_item = QTableWidgetItem("Объем поставщика")
-        customer_volume_item = QTableWidgetItem("Запасы")
-        space_cell = QTableWidgetItem("")
-        self.tableWidget.setItem(rows - 1, 0, supplier_volume_item)
-        self.tableWidget.setItem(0, columns - 1, customer_volume_item)
-        self.tableWidget.setItem(rows - 1, columns - 1, space_cell)
+                label = QLabel(self)
+                if type(self.tableWidget.cellWidget(row, column)) != QSpinBox(self) and not (
+                        row == self.tableWidget.rowCount() - 1 and column == self.tableWidget.columnCount() - 1
+                ):
+                    spin_box = QSpinBox(self)
+                    spin_box.setValue(random.randint(1, 30))
+                    self.tableWidget.setCellWidget(row, column, spin_box)
+                elif row == self.tableWidget.rowCount() - 1 and column == self.tableWidget.columnCount() - 1:
+                    self.tableWidget.setCellWidget(row, column, label)
+
+        self.tableWidget.setHorizontalHeaderLabels(storages_headers + ['Запасы'])
+        self.tableWidget.setVerticalHeaderLabels(shop_headers + ['Потребности'])
+
+        label = QLabel(self)
+        self.tableWidget_2.setCellWidget(self.tableWidget.rowCount(), 0, label)
+
+        self.tableWidget_2.setHorizontalHeaderLabels(storages_headers + ['Запасы'])
+        self.tableWidget_2.setVerticalHeaderLabels(shop_headers + ['Потребности'])
+
+        self.resize_cell_table()
+
+    def resizeEvent(self, a0, QResizeEvent=None):
+        self.resize_cell_table()
+
+    def resize_cell_table(self):
+        width = max(150, (self.tableWidget.width() - 150) // (self.spinBox_columns.value() + 1))
+        height = max(50, (self.tableWidget.height() - 30) // (self.spinBox_rows.value() + 1))
+
+        for row in range(self.tableWidget.rowCount()):
+            self.tableWidget.setRowHeight(row, height)
+            self.tableWidget_2.setRowHeight(row, height)
+
+        height = max(60, (self.tableWidget.height()) // (self.spinBox_rows.value() + 1))
+        self.tableWidget_2.setRowHeight(self.tableWidget.rowCount(), height)
+        self.tableWidget_2.setSpan(self.tableWidget.rowCount(), 0, self.tableWidget.rowCount(),
+                                   self.tableWidget.columnCount())
+
+        for column in range(self.tableWidget.columnCount()):
+            self.tableWidget.setColumnWidth(column, width)
+            self.tableWidget_2.setColumnWidth(column, width)
 
     def update_table_rows(self, value):
         self.tableWidget.setRowCount(value)
