@@ -1,7 +1,7 @@
 import random
 import sys
 
-from PyQt5.QtCore import QTimer
+from PyQt5.QtCore import QTimer, Qt
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QHeaderView, QMessageBox, QSpinBox, \
     QSizePolicy, QLabel
 from PyQt5.uic import loadUi
@@ -29,6 +29,46 @@ class MainWindow(QMainWindow):
         self.pushButton.clicked.connect(self.copy_table_values)
 
         QTimer.singleShot(100, self.fill_table_with_indices)
+
+    def extract_cost_matrix(self):
+        cost_matrix = []
+        for row in range(self.spinBox_rows.value()):
+            row_data = []
+            for column in range(self.spinBox_columns.value()):
+                spin_box = self.tableWidget.cellWidget(row, column)
+                row_data.append(spin_box.value())
+            cost_matrix.append(row_data)
+        return cost_matrix
+
+    def extract_storages(self):
+        storages = []
+        for row in range(self.spinBox_rows.value()):
+            spin_box = self.tableWidget.cellWidget(row, self.spinBox_columns.value())
+            if type(spin_box) is QSpinBox:
+                storages.append(spin_box.value())
+                label = QLabel()
+                label.setAlignment(Qt.AlignCenter | Qt.AlignVCenter)
+                label.setText(str(spin_box.value()))
+                self.tableWidget_2.setCellWidget(row, self.spinBox_columns.value(), label)
+        return storages
+
+    def extract_shops(self):
+        shops = []
+        for column in range(self.spinBox_columns.value()):
+            spin_box = self.tableWidget.cellWidget(self.spinBox_rows.value(), column)
+            if type(spin_box) is QSpinBox:
+                shops.append(spin_box.value())
+                label = QLabel()
+                label.setAlignment(Qt.AlignCenter | Qt.AlignVCenter)
+                label.setText(str(spin_box.value()))
+                self.tableWidget_2.setCellWidget(self.spinBox_rows.value(), column, label)
+        return shops
+
+    def extract_data(self):
+        self.cost_matrix = self.extract_cost_matrix()
+        self.storages = self.extract_storages()
+        self.shops = self.extract_shops()
+        result = first_plan(self.cost_matrix, self.storages, self.shops)
 
     def fill_table_with_indices(self):
         self.tableWidget_2.setColumnCount(0)
