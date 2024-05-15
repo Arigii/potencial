@@ -4,6 +4,7 @@ from PyQt5.QtCore import QTimer, Qt
 from PyQt5.QtWidgets import QMainWindow, QMessageBox, QSpinBox, QLabel
 from PyQt5.uic import loadUi
 
+from logic_plan import oporn_plan
 from redistribution_method.redistribution_method import redistribution_method
 
 
@@ -14,6 +15,8 @@ class MainWindow(QMainWindow):
         self.cost_matrix = None
         self.shops = None
         loadUi("untitled.ui", self)
+
+        self.frst = True
 
         # Устанавливаем количество строк и столбцов для таблицы
         self.tableWidget.setRowCount(self.spinBox_rows.value())
@@ -30,6 +33,30 @@ class MainWindow(QMainWindow):
         self.pushButton.clicked.connect(self.extract_data)
 
         QTimer.singleShot(100, self.fill_table_with_indices)
+
+        QTimer.singleShot(300, self.start_matrix)
+
+    def start_matrix(self):
+        self.spinBox_rows.setValue(3)
+        for row in range(len(strt_matrix)):
+            for column in range(len(strt_matrix[row])):
+                spin_box = QSpinBox(self)
+                spin_box.setValue(strt_matrix[row][column])
+                self.tableWidget.setCellWidget(row, column, spin_box)
+
+    def start_calculate(self):
+        self.pushButton.clicked.connect(self.extract_data)
+        self.cost_matrix = self.extract_cost_matrix()
+        self.storages = self.extract_storages()
+        self.shops = self.extract_shops()
+        result = oporn_plan(self.cost_matrix, self.storages, self.shops)
+        for row_index in range(len(result)):
+            for column_index in range(len(result[row_index])):
+                label = QLabel()
+                value = result[row_index][column_index]
+                label.setText(str(value) if value != 0 else '')
+                label.setAlignment(Qt.AlignCenter | Qt.AlignVCenter)
+                self.tableWidget_2.setCellWidget(row_index, column_index, label)
 
     def extract_cost_matrix(self):
         cost_matrix = []
@@ -66,6 +93,10 @@ class MainWindow(QMainWindow):
         return shops
 
     def extract_data(self):
+        if self.frst:
+            self.frst = False
+            self.start_calculate()
+            return
         self.cost_matrix = self.extract_cost_matrix()
         self.storages = self.extract_storages()
         self.shops = self.extract_shops()
@@ -150,3 +181,11 @@ class MainWindow(QMainWindow):
         for column in range(self.tableWidget.columnCount()):
             self.tableWidget.setColumnWidth(column, width)
             self.tableWidget_2.setColumnWidth(column, width)
+
+
+strt_matrix = [
+    [1, 3, 2, 4, 35],
+    [2, 1, 4, 3, 50],
+    [3, 5, 6, 1, 15],
+    [30, 10, 20, 40]
+]
