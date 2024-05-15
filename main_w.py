@@ -4,7 +4,7 @@ from PyQt5.QtCore import QTimer, Qt
 from PyQt5.QtWidgets import QMainWindow, QMessageBox, QSpinBox, QLabel
 from PyQt5.uic import loadUi
 
-from logic_plan import oporn_plan
+from logic_plan import oporn_plan, calculate_potentials
 from redistribution_method.redistribution_method import redistribution_method
 
 
@@ -96,6 +96,8 @@ class MainWindow(QMainWindow):
         if self.frst:
             self.frst = False
             self.start_calculate()
+            QMessageBox.critical(self, "Внимание",
+                                 "Опорный план будет построен оптимальным методом")
             return
         self.cost_matrix = self.extract_cost_matrix()
         self.storages = self.extract_storages()
@@ -106,9 +108,10 @@ class MainWindow(QMainWindow):
             return
         try:
             result, result_summ = redistribution_method(self.cost_matrix, self.storages, self.shops)
-            # success = calculate_potentials(self.cost_matrix, result)
-            # if not success:
-            #     QMessageBox.critical(self, "Внимание", "Опорный план будет оптимизирован потенциальным методом")
+            initial_plan = oporn_plan(self.cost_matrix, self.storages, self.shops)
+            success = calculate_potentials(self.cost_matrix, initial_plan)
+            if not success:
+                 QMessageBox.critical(self, "Внимание", "Опорный план будет оптимизирован потенциальным методом")
 
             for row_index in range(len(result)):
                 for column_index in range(len(result[row_index])):

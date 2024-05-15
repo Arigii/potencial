@@ -48,7 +48,8 @@ def calculate_potentials(cost_matrix, initial_plan):
     u[0] = 0  # Arbitrarily set the first potential to 0
 
     # Loop until all potentials are determined
-    while None in u or None in v:
+    iterations = 0
+    while (None in u or None in v) and iterations < 1000:
         for i in range(num_rows):
             for j in range(num_cols):
                 if initial_plan[i][j] != 0:
@@ -56,21 +57,18 @@ def calculate_potentials(cost_matrix, initial_plan):
                         v[j] = cost_matrix[i][j] - u[i]
                     elif u[i] is None and v[j] is not None:
                         u[i] = cost_matrix[i][j] - v[j]
+        iterations += 1
 
     return is_optimal(cost_matrix, initial_plan, u, v)
+
 
 
 def is_optimal(cost_matrix, initial_plan, u, v):
     num_rows = len(cost_matrix)
     num_cols = len(cost_matrix[0])
-    print(u)
-    print(v)
-
     for i in range(num_rows):
         for j in range(num_cols):
             if initial_plan[i][j] == 0:
                 if cost_matrix[i][j] - u[i] - v[j] < 0:
                     return False
     return True
-
-
