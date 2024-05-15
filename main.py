@@ -2,10 +2,11 @@ import random
 import sys
 
 from PyQt5.QtCore import QTimer, Qt
-from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QSpinBox, QLabel
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QSpinBox, QLabel, QLCDNumber
 from PyQt5.uic import loadUi
 
 from logic_plan import oporn_plan, calculate_potentials
+from redistribution_method.redistribution_method import redistribution_method
 
 
 class MainWindow(QMainWindow):
@@ -74,18 +75,22 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, "Ошибка",
                                  "Невозможно построить план у задачи открытого типа")
             return
-        result = oporn_plan(self.cost_matrix, self.storages, self.shops)
-        success = calculate_potentials(self.cost_matrix, result)
-        if not success:
-            QMessageBox.critical(self, "Внимание", "Опорный план будет оптимизирован потенциальным методом")
+        try:
+            result, result_summ = redistribution_method(self.cost_matrix, self.storages, self.shops)
+            # success = calculate_potentials(self.cost_matrix, result)
+            # if not success:
+            #     QMessageBox.critical(self, "Внимание", "Опорный план будет оптимизирован потенциальным методом")
 
-        for row_index in range(len(result)):
-            for column_index in range(len(result[row_index])):
-                label = QLabel()
-                value = result[row_index][column_index]
-                label.setText(str(value) if value != 0 else '')
-                label.setAlignment(Qt.AlignCenter | Qt.AlignVCenter)
-                self.tableWidget_2.setCellWidget(row_index, column_index, label)
+            for row_index in range(len(result)):
+                for column_index in range(len(result[row_index])):
+                    label = QLabel()
+                    value = result[row_index][column_index]
+                    label.setText(str(value) if value != 0 else '')
+                    label.setAlignment(Qt.AlignCenter | Qt.AlignVCenter)
+                    self.tableWidget_2.setCellWidget(row_index, column_index, label)
+            self.lcdNumber.display(result_summ)
+        except RecursionError:
+            QMessageBox.critical(self, "Внимание", "Оптимальное решение для данной задачи найти не возможно")
 
     def fill_table_with_indices(self):
         self.tableWidget.setColumnCount(self.spinBox_columns.value() + 1)
